@@ -1,0 +1,292 @@
+@page "/"
+@using AssemblyLine.Pages.Components;
+
+<div class="assembly-line-container">
+
+    <h1>@HeaderName
+        <button type="button" class="btn btn-primary" @onclick="() => OpenCreateOperationDialog()">Add Operation</button>
+    </h1>
+
+    @if (operations.Count == 0) {
+
+        <div class="assembly-line-no-operations text-center">
+            There are no operations. To get started create an operation.
+        </div>
+
+    } else {
+
+        <div class="accordion" id="accordionOperations">
+
+            @foreach (var operationItem in operations)
+            {
+                string headingID = "heading"+operationItem.OperationID;
+                string collapseID = "collapse"+operationItem.OperationID;
+                string expanded = operations.Count == 1 ? "true" : "false" ; 
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="@headingID">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseID" aria-controls="@collapseID" aria-expanded="@expanded">
+                        Step @operationItem.OrderInWhichToPerform: @operationItem.Name
+                    </button>
+                    </h2>
+                    <div id="@collapseID" class="accordion-collapse collapse" aria-labelledby="@headingID" data-bs-parent="#accordionOperations">
+                    <div class="accordion-body row">
+
+                        <div class="col-md-3">
+                            <div class="operation-image-container text-center">
+                                <button class="btn btn-outline-primary btn-add-image">Add Image</button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 operation-description">
+                            <div class="operation-actions">
+
+                                <div class="btn-group mb-3">
+
+                                    <button type="button" class="btn btn-outline-secondary" @onclick="@(e => MoveOperationUp(operationItem.OperationID))">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
+                                            <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"></path>
+                                        </svg>
+                                        <span class="visually-hidden">Button</span>
+                                    </button>
+                                    
+                                    <button type="button" class="btn btn-outline-secondary" @onclick="@(e => MoveOperationDown(operationItem.OperationID))">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
+                                            <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"></path>
+                                        </svg>
+                                        <span class="visually-hidden">Button</span>
+                                    </button>
+
+                                    <button type="button" class="btn btn-outline-secondary" @onclick="@(e => RemoveOperation(operationItem.OperationID))">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"></path>
+                                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"></path>
+                                        </svg>
+                                        <span class="visually-hidden">Button</span>
+                                    </button>
+
+                                </div>
+
+                            </div>
+                            <div>
+                                <strong>Description:</strong> @operationItem.Description
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="operation-device-container text-center">
+
+                                @if (operationItem.Device == null) 
+                                {
+                                    <button type="button" class="btn btn-outline-primary btn-add-device" @onclick="() => OpenAddDeviceDialog(operationItem)">Add Device</button>
+                                } 
+                                else 
+                                {
+                                    <div class="device-name">
+                                        @operationItem.Device.Name
+                                        <br />
+                                        (@operationItem.Device.DeviceType)
+                                    </div>                                    
+                                }
+
+                            </div>
+                        </div>
+
+                    </div>
+                    </div>
+                </div>
+
+            }
+
+        </div>
+
+    }
+
+</div>
+
+@if (CreateOperationDialogOpen)
+{
+    <CreateOperationDialogue OnClose="@OnCreateOperationDialogClose" OnCreate="@OnCreateOperation"></CreateOperationDialogue>
+}
+
+@if (AddDeviceDialogOpen)
+{
+    <AddDeviceDialogue operation="@selectedOperation" devices="@devices" OnClose="@OnAddDeviceDialogClose" OnAddDevice="@OnAddDevice"></AddDeviceDialogue>
+}
+
+@code {
+
+    //-----
+
+    protected List<Operation> operations = new List<Operation>();
+    protected List<Device> devices = new List<Device>();
+    
+    protected Operation selectedOperation = new Operation();
+
+    public bool CreateOperationDialogOpen { get; set; }
+    public bool AddDeviceDialogOpen { get; set; }
+
+    //-----
+
+    [Parameter]
+    public string HeaderName { get; set; }
+
+    //-----
+
+    protected override void OnInitialized()
+    {
+        //default value
+        HeaderName = "Main Assembly Line";
+
+        //-----
+
+        //Lets create some default devices as test data
+        devices.Add(
+            new Device {
+                DeviceID = 1,
+                DeviceType = DeviceType.Printer,
+                Name = "Smart_Mono on 192.168.0.183"
+            }
+        );
+
+        devices.Add(
+            new Device {
+                DeviceID = 2,
+                DeviceType = DeviceType.Printer,
+                Name = "Smart_Color on 192.168.0.185"
+            }
+        );
+
+        devices.Add(
+            new Device {
+                DeviceID = 3,
+                DeviceType = DeviceType.Printer,
+                Name = "HP DesignJet T630 on 192.168.0.186"
+            }
+        );
+
+        devices.Add(
+            new Device {
+                DeviceID = 4,
+                DeviceType = DeviceType.BarcodeScanner,
+                Name = "Zebra DS2208"
+            }
+        );
+
+        devices.Add(
+            new Device {
+                DeviceID = 5,
+                DeviceType = DeviceType.Camera,
+                Name = "OMRON FHSC"
+            }
+        );
+
+    }//end: OnInitialized
+
+    //-----
+
+    private void OnCreateOperation(Operation operation) 
+    {
+        //if we had a database then we'd allow identity to assign an ID
+        operation.OperationID = 1 ;
+        if (operations.Count > 0) operation.OperationID = operations.Last().OperationID + 1;
+
+        operation.OrderInWhichToPerform = 1 ;
+        if (operations.Count > 0) operation.OrderInWhichToPerform = operations.Last().OrderInWhichToPerform + 1;
+
+        operations.Add(operation);
+        operation = new Operation();
+
+        CreateOperationDialogOpen = false;
+
+    }//end: method AddOperation
+
+    //-----
+
+    private void OnAddDevice(Operation operation) 
+    {
+        foreach (var op in operations) if (op.OperationID == operation.OperationID) op.Device = operation.Device;
+
+        AddDeviceDialogOpen = false;
+
+    }//end: method OnAddDevice
+
+    //-----
+
+    private void MoveOperationUp(int id) 
+    {
+        Operation operation = operations.FirstOrDefault(m => m.OperationID == id);
+
+        if (operation != null && operation.OrderInWhichToPerform > 1) {
+
+            operations.RemoveAll(m => m.OperationID == id) ;  
+            operations.Insert(operation.OrderInWhichToPerform-2,operation);     
+    
+            for (int i = 0 ; i < operations.Count ; i++) operations.ElementAt(i).OrderInWhichToPerform = i+1 ;
+
+        }
+
+    }//end: method RemoveOperation
+
+    //-----
+
+    private void MoveOperationDown(int id) 
+    {
+        Operation operation = operations.FirstOrDefault(m => m.OperationID == id);
+
+        if (operation != null && operation.OrderInWhichToPerform < operations.Count) {
+
+            operations.RemoveAll(m => m.OperationID == id) ;  
+            operations.Insert(operation.OrderInWhichToPerform,operation);     
+
+            for (int i = 0 ; i < operations.Count ; i++) operations.ElementAt(i).OrderInWhichToPerform = i+1 ;
+
+        }
+
+    }//end: method RemoveOperation
+
+    //-----
+
+    private void RemoveOperation(int id) 
+    {
+        operations.RemoveAll(m => m.OperationID == id) ;        
+        for (int i = 0 ; i < operations.Count ; i++) operations.ElementAt(i).OrderInWhichToPerform = i+1 ;
+
+    }//end: method RemoveOperation
+
+    //-----
+
+    private void OpenCreateOperationDialog()
+    {
+        CreateOperationDialogOpen = true;
+        StateHasChanged();
+    }//end: OpenCreateOperationDialog
+
+    //-----
+
+    private void OnCreateOperationDialogClose(bool accepted)
+    {
+        CreateOperationDialogOpen = false;
+        StateHasChanged();
+    }//end: OnCreateOperationDialogClose
+
+    //-----
+
+    private void OpenAddDeviceDialog(Operation operation)
+    {
+        selectedOperation = operation ;
+        AddDeviceDialogOpen = true;
+        StateHasChanged();
+    }//end: OpenAddDeviceDialog
+
+    //-----
+
+    private void OnAddDeviceDialogClose(bool accepted)
+    {
+        AddDeviceDialogOpen = false;
+        StateHasChanged();
+    }//end: OnAddDeviceDialogClose
+
+    //-----
+
+}
